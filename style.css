@@ -1,0 +1,178 @@
+/* Define as variáveis de cores para o tema claro padrão */
+:root {
+    --cor-fundo: #eef5fa;
+    --cor-texto: #1a1a1a;
+    --cor-primaria: #1b5292;
+    --cor-secundaria: #3982c1;
+    --cor-destaque: #80c4e9;
+    --cor-sucesso: #0a7a42; 
+    --cor-erro: #d93025;    
+    --cor-aviso: #e67c00;   
+    --cor-borda: #cbd5e1;
+    --cor-desabilitado: #e2e8f0;
+    
+    --cor-fundo-container: #ffffff;
+    --cor-fundo-input: #f8fafc;
+    --cor-fundo-input-focus: #ffffff; 
+    --cor-texto-secundario: #555555;
+    --filtro-logo: none;
+    
+    --bg-grad-inicio: var(--cor-primaria);
+    --bg-grad-fim: var(--cor-fundo);
+}
+
+/* Sobrescreve as variáveis quando o tema escuro é ativado */
+[data-theme="dark"] {
+    --cor-fundo: #121212; 
+    --cor-fundo-container: #1e1e1e; 
+    --cor-fundo-input: #262626; 
+    --cor-fundo-input-focus: #333333; 
+    
+    --cor-texto: #f5f5f5;
+    --cor-texto-secundario: #a3a3a3;
+    
+    --cor-primaria: #60a5fa;
+    --cor-secundaria: #3b82f6;
+    
+    --cor-borda: #404040;
+    --cor-desabilitado: #2a2a2a;
+    
+    --cor-erro: #ef5350; 
+    --cor-aviso: #ffb300; 
+    --cor-sucesso: #4caf50; 
+    
+    --filtro-logo: drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.5)); 
+    
+    --bg-grad-inicio: #1a1a1a;
+    --bg-grad-fim: #121212;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+body { background: linear-gradient(135deg, var(--bg-grad-inicio) 0%, var(--bg-grad-fim) 100%); color: var(--cor-texto); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; transition: background 0.3s, color 0.3s; }
+
+.container { background: var(--cor-fundo-container); width: 100%; max-width: 550px; padding: 40px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); position: relative; transition: background-color 0.3s; }
+
+.btn-tema { position: absolute; top: 15px; right: 20px; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; transition: transform 0.2s; z-index: 10; }
+.btn-tema:hover { transform: scale(1.1); }
+
+.form-header { text-align: center; margin-bottom: 25px; }
+
+.logo_undf { width: 350px; max-width: 100%; height: auto; display: block; margin: 20px auto; filter: var(--filtro-logo); transition: filter 0.3s; }
+
+.form-header h1 { font-size: 1.4rem; color: var(--cor-primaria); margin-bottom: 5px; }
+.form-header p { font-size: 0.9rem; color: var(--cor-texto-secundario); transition: color 0.3s; }
+
+.form-group { margin-bottom: 22px; border: none; }
+label, legend { display: block; font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; }
+
+input[type="text"], input[type="email"], input[type="tel"] {
+    width: 100%; padding: 12px; border: 2px solid var(--cor-borda); border-radius: 6px;
+    font-size: 1rem; transition: all 0.2s ease-in-out; background-color: var(--cor-fundo-input); color: var(--cor-texto);
+}
+
+.input-group { display: flex; align-items: center; }
+.input-group input { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; }
+
+.input-suffix { padding: 12px; background-color: var(--cor-desabilitado); border: 2px solid var(--cor-borda); border-left: none; border-top-right-radius: 6px; border-bottom-right-radius: 6px; color: var(--cor-texto-secundario); font-weight: 600; transition: background-color 0.3s, color 0.3s; }
+
+.dropdown-container { position: relative; }
+
+.dropdown-list {
+    position: absolute; width: 100%; max-height: 180px; overflow-y: auto; background: var(--cor-fundo-container);
+    border: 2px solid var(--cor-borda); border-top: none; border-radius: 0 0 6px 6px;
+    list-style: none; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); color: var(--cor-texto);
+}
+.dropdown-list li { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--cor-borda); }
+
+.dropdown-list li:hover, .dropdown-list li:focus {
+    background-color: var(--cor-fundo); color: var(--cor-primaria); font-weight: bold; outline: 2px dashed var(--cor-primaria); outline-offset: -2px;
+}
+
+.group-radios { padding: 12px; border-radius: 6px; border: 2px solid var(--cor-borda); transition: border-color 0.2s; }
+.radio-options { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+.radio-options label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 400; }
+
+input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus {
+    transform: scale(1.05); border: 2px dashed var(--cor-primaria) !important; outline: none;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3); z-index: 10; position: relative; 
+    background-color: var(--cor-fundo-input-focus);
+}
+.input-group input:focus { border-right: 2px dashed var(--cor-primaria) !important; }
+input[type="radio"]:focus { transform: scale(1.2); outline: 2px dashed var(--cor-primaria); outline-offset: 3px; }
+
+body.using-mouse input[type="text"]:focus, 
+body.using-mouse input[type="email"]:focus, 
+body.using-mouse input[type="tel"]:focus {
+    transform: none; border: 2px solid var(--cor-primaria) !important; outline: none; box-shadow: none; z-index: 1;
+    background-color: var(--cor-fundo-input-focus);
+}
+body.using-mouse .input-group input:focus { border-right: none !important; }
+body.using-mouse input[type="radio"]:focus { transform: none; outline: none; }
+body.using-mouse .dropdown-list li:focus { outline: none; }
+
+.is-valid { border-color: var(--cor-sucesso) !important; }
+.is-invalid { border-color: var(--cor-erro) !important; }
+.is-empty { border-color: var(--cor-aviso) !important; }
+
+.msg-feedback { 
+    display: none; 
+    font-size: 0.85rem; 
+    margin-top: 8px; 
+    font-weight: 600; 
+    animation: fadeIn 0.3s; 
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, currentColor 12%, transparent);
+    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+button[type="submit"] { width: 100%; padding: 15px; background-color: var(--cor-primaria); color: white; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s; }
+button[type="submit"]:hover:not(:disabled) { background-color: var(--cor-secundaria); }
+button[type="submit"]:disabled { background-color: var(--cor-desabilitado); color: var(--cor-texto-secundario); cursor: not-allowed; }
+
+.hidden { display: none !important; }
+
+/* === SOBREPOSIÇÕES (OVERLAYS) E MODAIS === */
+/* Fundo embaciado para a tela de Loading dentro do formulário */
+.overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 12px; z-index: 20; }
+[data-theme="dark"] .overlay { background-color: rgba(18, 18, 18, 0.7); }
+
+/* Fundo escuro fixo para a tela de Sucesso/Erro cobrindo o navegador todo */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 30; backdrop-filter: blur(4px); }
+
+/* Card principal usado para Loading, Sucesso e Erro */
+.modal-content { background: var(--cor-fundo-container); color: var(--cor-texto); width: 90%; max-width: 440px; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: border 0.3s, box-shadow 0.3s, background-color 0.3s, color 0.3s; }
+
+/* Ajuste específico para deixar o Card de Loading mais elegante e estreito */
+.loading-box { max-width: 280px; padding: 35px 20px; border: 1px solid var(--cor-borda); }
+.loading-box p { font-weight: 600; color: var(--cor-primaria); margin: 0; font-size: 1.1rem; }
+
+/* O círculo de processamento perfeitamente centralizado */
+.spinner { border: 4px solid var(--cor-desabilitado); border-top: 4px solid var(--cor-primaria); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 15px auto; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.modal-sucesso { border: 3px solid var(--cor-sucesso); box-shadow: 0 0 25px color-mix(in srgb, var(--cor-sucesso) 30%, transparent); }
+.modal-erro { border: 3px solid var(--cor-erro); box-shadow: 0 0 25px color-mix(in srgb, var(--cor-erro) 30%, transparent); }
+
+.modal-icon { font-size: 3.5rem; margin-bottom: 10px; }
+.modal-content h2 { margin-bottom: 10px; font-size: 1.4rem; }
+.modal-content p { color: var(--cor-texto-secundario); margin-bottom: 10px; line-height: 1.5; transition: color 0.3s; }
+
+.modal-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 25px; flex-wrap: wrap; }
+.modal-buttons button { padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background-color 0.3s; }
+
+#btn-sucesso-ok, #btn-erro-tentar { background-color: var(--cor-secundaria); color: #ffffff; }
+#btn-sucesso-ok:hover, #btn-erro-tentar:hover { background-color: var(--cor-primaria); }
+
+.btn-cancelar { background-color: transparent !important; border: 2px solid var(--cor-borda) !important; color: var(--cor-texto-secundario) !important; transition: border-color 0.3s, color 0.3s; }
+.btn-cancelar:hover { border-color: var(--cor-texto) !important; color: var(--cor-texto) !important; }
+
+@media (max-width: 600px) {
+    body { padding: 0; }
+    .container { padding: 30px 20px; border-radius: 0; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+    .btn-tema { top: 15px; right: 15px; }
+    .radio-options { flex-direction: column; gap: 10px; align-items: flex-start; }
+}

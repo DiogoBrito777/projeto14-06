@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Interesse - Laboratório UnDF</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="container">
+        
+        <button type="button" id="btn-tema" class="btn-tema" aria-label="Alternar tema claro e escuro">
+            <span id="icone-tema">🌙</span>
+        </button>
+
+        <header class="form-header">
+            <img src="logo_undf.png" alt="Logo da Universidade do Distrito Federal" class="logo_undf">
+            <h2>Laboratório de Inovação Digital</h2>
+            <h1>Cadastro de Interesse</h1>
+            <p>Preencha seus dados para entrar na lista de espera dos projetos de pesquisa e extensão. Suas informações serão usadas apenas para o processo seletivo.</p>
+        </header>
+
+        <form id="form-institucional" class="form-content" novalidate>
+            
+            <div class="form-group">
+                <label for="nome">Nome Completo</label>
+                <input type="text" id="nome" name="nome" placeholder="ex: Samuel Oliveira" aria-describedby="erro-nome" autocomplete="name" required>
+                <span id="erro-nome" class="msg-feedback" aria-live="polite"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-mail Institucional</label>
+                <div class="input-group">
+                    <input type="text" id="email" name="email" placeholder="nome.sobrenome" aria-describedby="erro-email" autocomplete="off" required>
+                    <span class="input-suffix">@undf.edu.br</span>
+                </div>
+                <span id="erro-email" class="msg-feedback" aria-live="polite"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="telefone">Telefone (com DDD)</label>
+                <input type="tel" id="telefone" name="telefone" placeholder="(61) 99999-9999" aria-describedby="erro-telefone" autocomplete="tel" required>
+                <span id="erro-telefone" class="msg-feedback" aria-live="polite"></span>
+            </div>
+
+            <div class="form-group dropdown-container">
+                <label for="curso">Selecione o curso</label>
+                <input type="text" id="curso" name="curso" placeholder="Ex: Ciência da Computação" aria-describedby="erro-curso" autocomplete="off" required role="combobox" aria-expanded="false" aria-controls="lista-cursos" aria-autocomplete="list">
+                <ul id="lista-cursos" class="dropdown-list hidden" role="listbox"></ul>
+                <span id="erro-curso" class="msg-feedback" aria-live="polite"></span>
+            </div>
+
+            <fieldset id="fieldset-turno" class="form-group group-radios" aria-describedby="erro-turno">
+                <legend>Turno do Curso</legend>
+                <div class="radio-options">
+                    <label><input type="radio" name="turno" value="matutino" required> Matutino</label>
+                    <label><input type="radio" name="turno" value="vespertino" required> Vespertino</label>
+                    <label><input type="radio" name="turno" value="noturno" required> Noturno</label>
+                </div>
+                <span id="erro-turno" class="msg-feedback" aria-live="polite"></span>
+            </fieldset>
+
+            <button type="submit" id="btn-enviar" disabled>Enviar Cadastro</button>
+        </form>
+
+        <div id="tela-loading" class="overlay hidden" aria-hidden="true">
+            <div class="modal-content loading-box">
+                <div class="spinner"></div>
+                <p>Processando seus dados...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="modal-feedback" class="modal-overlay hidden" aria-modal="true" role="dialog">
+        <div id="modal-box" class="modal-content">
+            <div id="modal-icon" class="modal-icon"></div>
+            <h2 id="modal-title"></h2>
+            <p id="modal-desc"></p>
+            
+            <div class="modal-buttons">
+                <button id="btn-sucesso-ok" class="hidden">OK</button>
+                <button id="btn-erro-tentar" class="hidden">Tentar Novamente</button>
+                <button id="btn-erro-cancelar" class="btn-cancelar hidden">Sair e Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
