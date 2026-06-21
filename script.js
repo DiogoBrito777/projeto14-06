@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (!regexNomeValido.test(valor)) {
             setStatus(inputs.nome, 'erro', "Símbolos e números não são permitidos. Use apenas letras.", "Nome Completo", perdeuFoco);
         } else if (palavras.length < 2 || !minimoDuasLetras) {
-            setStatus(inputs.nome, 'erro', "Insira seu nome completo", "Nome Completo", perdeuFoco, "Nome incompleto. Digite pelo menos um nome e um sobrenome.");
+            setStatus(inputs.nome, 'erro', "Insira seu nome completo, sem abreviação.", "Nome Completo", perdeuFoco, "Nome incompleto. Digite pelo menos um nome e um sobrenome.");
         } else {
             setStatus(inputs.nome, 'sucesso', "", "Nome Completo", perdeuFoco);
         }
