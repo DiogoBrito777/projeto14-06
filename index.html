@@ -11,67 +11,85 @@
     <main class="container">
         
         <button type="button" id="btn-tema" class="btn-tema" aria-label="Alternar tema claro e escuro">
-            <span id="icone-tema">🌙</span>
+            <span id="icone-tema" aria-hidden="true">🌙</span>
         </button>
 
         <header class="form-header">
-            <img src="logo_undf.png" alt="Logo da Universidade do Distrito Federal" class="logo_undf">
+            <img src="logo_undf.png" id="img-logo" alt="Logo da Universidade do Distrito Federal" class="logo_undf">
             <h2>Laboratório de Inovação Digital</h2>
             <h1>Cadastro de Interesse</h1>
-            <p>Preencha seus dados para entrar na lista de espera dos projetos de pesquisa e extensão. Suas informações serão usadas apenas para o processo seletivo.</p>
+            <p>Preencha seus dados para entrar na lista de espera dos projetos.</p>
         </header>
+
+        <div id="anunciador-polite" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+        <div id="anunciador-assertive" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
         <form id="form-institucional" class="form-content" novalidate>
             
             <div class="form-group">
                 <label for="nome">Nome Completo</label>
-                <input type="text" id="nome" name="nome" placeholder="ex: Samuel Oliveira" aria-describedby="erro-nome" autocomplete="name" required>
-                <span id="erro-nome" class="msg-feedback" aria-live="polite"></span>
+                <span id="instrucao-nome" class="sr-only">Insira seu nome completo, usando apenas letras. Campo obrigatório.</span>
+                <input type="text" id="nome" name="nome" placeholder="ex: Samuel Oliveira" aria-describedby="instrucao-nome erro-nome" autocomplete="name" required spellcheck="false">
+                <span id="erro-nome" class="msg-feedback"></span>
             </div>
 
             <div class="form-group">
                 <label for="email">E-mail Institucional</label>
+                <span id="instrucao-email" class="sr-only">Insira apenas a primeira parte do seu e-mail, no formato nome.sobrenome. O domínio arroba undf ponto edu ponto br já está preenchido. Campo obrigatório.</span>
                 <div class="input-group">
-                    <input type="text" id="email" name="email" placeholder="nome.sobrenome" aria-describedby="erro-email" autocomplete="off" required>
-                    <span class="input-suffix">@undf.edu.br</span>
+                    <input type="text" id="email" name="email" placeholder="nome.sobrenome" aria-describedby="instrucao-email erro-email" autocomplete="off" required spellcheck="false">
+                    <span class="input-suffix" aria-hidden="true">@undf.edu.br</span>
                 </div>
-                <span id="erro-email" class="msg-feedback" aria-live="polite"></span>
+                <span id="erro-email" class="msg-feedback"></span>
             </div>
 
             <div class="form-group">
                 <label for="telefone">Telefone (com DDD)</label>
-                <input type="tel" id="telefone" name="telefone" placeholder="(61) 99999-9999" aria-describedby="erro-telefone" autocomplete="tel" required>
-                <span id="erro-telefone" class="msg-feedback" aria-live="polite"></span>
+                <span id="instrucao-telefone" class="sr-only">Insira o DDD e o número do seu telefone. Digite os 11 números, a formatação é automática. Campo obrigatório.</span>
+                <input type="tel" id="telefone" name="telefone" placeholder="(61) 99999-9999" aria-describedby="instrucao-telefone erro-telefone" autocomplete="tel" required>
+                <span id="erro-telefone" class="msg-feedback"></span>
             </div>
 
             <div class="form-group dropdown-container">
                 <label for="curso">Selecione o curso</label>
-                <input type="text" id="curso" name="curso" placeholder="Ex: Ciência da Computação" aria-describedby="erro-curso" autocomplete="off" required role="combobox" aria-expanded="false" aria-controls="lista-cursos" aria-autocomplete="list">
-                <ul id="lista-cursos" class="dropdown-list hidden" role="listbox"></ul>
-                <span id="erro-curso" class="msg-feedback" aria-live="polite"></span>
+                <span id="instrucao-curso" class="sr-only">Campo de busca de curso. Comece a digitar o nome do seu curso para filtrar as opções, ou pressione Alt e Seta para Baixo para abrir a lista completa. Use as setas do teclado para navegar e Enter para confirmar. Campo obrigatório.</span>
+                <input type="text" id="curso" name="curso" placeholder="Ex: Ciência da Computação" aria-describedby="instrucao-curso erro-curso" autocomplete="off" required role="combobox" aria-expanded="false" aria-controls="lista-cursos" aria-autocomplete="list" aria-haspopup="listbox">
+                <ul id="lista-cursos" class="dropdown-list hidden" role="listbox" aria-label="Resultados da busca de cursos"></ul>
+                <span id="erro-curso" class="msg-feedback"></span>
             </div>
 
-            <fieldset id="fieldset-turno" class="form-group group-radios" aria-describedby="erro-turno">
+            <fieldset id="fieldset-turno" class="form-group group-radios" aria-describedby="instrucao-turno erro-turno">
                 <legend>Turno do Curso</legend>
+                <span id="instrucao-turno" class="sr-only">Navegue com as setas do teclado para escolher o turno matutino, vespertino ou noturno. Campo obrigatório.</span>
                 <div class="radio-options">
-                    <label><input type="radio" name="turno" value="matutino" required> Matutino</label>
-                    <label><input type="radio" name="turno" value="vespertino" required> Vespertino</label>
-                    <label><input type="radio" name="turno" value="noturno" required> Noturno</label>
+                    <div class="radio-item">
+                        <input type="radio" id="turno-matutino" name="turno" value="matutino" required>
+                        <label for="turno-matutino">Matutino</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="turno-vespertino" name="turno" value="vespertino" required>
+                        <label for="turno-vespertino">Vespertino</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="turno-noturno" name="turno" value="noturno" required>
+                        <label for="turno-noturno">Noturno</label>
+                    </div>
                 </div>
-                <span id="erro-turno" class="msg-feedback" aria-live="polite"></span>
+                <span id="erro-turno" class="msg-feedback"></span>
             </fieldset>
 
-            <button type="submit" id="btn-enviar" disabled>Enviar Cadastro</button>
+            <button type="submit" id="btn-enviar" aria-disabled="true" aria-describedby="feedback-botao-enviar">Enviar Cadastro</button>
+            <div id="feedback-botao-enviar" class="msg-feedback-botao"></div>
         </form>
 
-        <div id="tela-loading" class="overlay hidden" aria-hidden="true">
-            <div class="modal-content loading-box">
-                <div class="spinner"></div>
-                <p>Processando seus dados...</p>
-            </div>
-        </div>
-
     </main>
+
+    <div id="tela-loading" class="overlay hidden">
+        <div class="modal-content loading-box" tabindex="-1">
+            <div class="spinner"></div>
+            <p>Processando seus dados...</p>
+        </div>
+    </div>
 
     <div id="modal-feedback" class="modal-overlay hidden" aria-modal="true" role="dialog">
         <div id="modal-box" class="modal-content">

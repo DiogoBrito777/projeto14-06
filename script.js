@@ -1,43 +1,56 @@
 document.addEventListener('DOMContentLoaded', () => {
     
-    // Controle de Tema (Claro/Escuro)
+    const anunciadorPolite = document.getElementById('anunciador-polite');
+    const anunciadorAssertive = document.getElementById('anunciador-assertive');
+
+    /**
+     * Envia mensagens de texto para as regiões aria-live do leitor de tela.
+     */
+    const falarParaLeitor = (mensagem, urgente = false) => {
+        const alvo = urgente ? anunciadorAssertive : anunciadorPolite;
+        alvo.textContent = ''; 
+        
+        const tempoEspera = urgente ? 500 : 50;
+
+        setTimeout(() => { 
+            alvo.textContent = mensagem; 
+        }, tempoEspera);
+    };
+
     const btnTema = document.getElementById('btn-tema');
     const iconeTema = document.getElementById('icone-tema');
 
-    // Aplica as configurações visuais do tema selecionado
+    /**
+     * Aplica o tema visual, atualiza o logo e o localStorage.
+     */
     const aplicarTema = (temaEscuro) => {
+        const imgLogo = document.getElementById('img-logo');
         if (temaEscuro) {
             document.documentElement.setAttribute('data-theme', 'dark');
             iconeTema.textContent = '☀️';
+            if (imgLogo) imgLogo.src = 'logo_undf_dark.png';
             localStorage.setItem('temaFormulario', 'dark');
         } else {
             document.documentElement.removeAttribute('data-theme');
             iconeTema.textContent = '🌙';
+            if (imgLogo) imgLogo.src = 'logo_undf.png';
             localStorage.setItem('temaFormulario', 'light');
         }
     };
 
-    // Lê configurações armazenadas ou verifica a preferência do sistema operacional
     const temaSalvo = localStorage.getItem('temaFormulario');
     const prefereEscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (temaSalvo === 'dark' || (!temaSalvo && prefereEscuro)) {
-        aplicarTema(true);
-    } else {
-        aplicarTema(false);
-    }
+    if (temaSalvo === 'dark' || (!temaSalvo && prefereEscuro)) aplicarTema(true);
+    else aplicarTema(false);
 
-    // Intercepta o clique no botão para alternar o tema atual
     btnTema.addEventListener('click', () => {
         const ehEscuro = document.documentElement.getAttribute('data-theme') === 'dark';
         aplicarTema(!ehEscuro);
     });
 
-    // Adiciona classe para detectar clique do mouse e remove ao usar o TAB (Acessibilidade Visual)
     document.body.addEventListener('mousedown', () => document.body.classList.add('using-mouse'));
     document.body.addEventListener('keydown', (e) => { if (e.key === 'Tab') document.body.classList.remove('using-mouse'); });
 
-    // Mapeamento dos elementos DOM.
     const form = document.getElementById('form-institucional');
     const btnEnviar = document.getElementById('btn-enviar');
     
@@ -50,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fieldsetTurno: document.getElementById('fieldset-turno')
     };
 
-    // Array contendo a lista oficial de cursos disponíveis.
     const cursosDisponiveis = [
         "Pedagogia", "Matemática", "Engenharia de Software", "Sistemas de Informação",
         "Gestão Ambiental", "Letras-Português", "Letras-Inglês", "Atuação Cênica",
@@ -58,26 +70,90 @@ document.addEventListener('DOMContentLoaded', () => {
         "Dança", "Ciência da Computação", "Ciências Econômicas", "Psicologia", "Nutrição"
     ];
 
-    // Recupera e popula os dados salvos temporariamente no navegador.
+    /**
+     * Mapeamento de regras de negócios dos cursos para definição de turnos permitidos.
+     */
+    const categoriasCursos = {
+        "Matemática": "exatas", "Engenharia de Software": "exatas", "Sistemas de Informação": "exatas", "Ciência da Computação": "exatas",
+        "Gestão Ambiental": "gestao", "Gestão Pública": "gestao", "Gestão da Tecnologia da Informação": "gestao",
+        "Pedagogia": "humanas", "Letras-Português": "humanas", "Letras-Inglês": "humanas", "Atuação Cênica": "humanas",
+        "Serviço Social": "humanas", "Produção Cultural": "humanas", "Dança": "humanas", "Ciências Econômicas": "humanas",
+        "Psicologia": "humanas", "Nutrição": "humanas"
+    };
+
+    /**
+     * Restringe as opções de turno disponíveis de acordo com a categoria do curso.
+     * Retorna a string de instrução para ser lida via acessibilidade.
+     */
+    const atualizarTurnosDisponiveis = (cursoSelecionado) => {
+        const radioMatutino = document.getElementById('turno-matutino');
+        const radioVespertino = document.getElementById('turno-vespertino');
+        const radioNoturno = document.getElementById('turno-noturno');
+        
+        [radioMatutino, radioVespertino, radioNoturno].forEach(r => {
+            r.disabled = false;
+            r.parentElement.classList.remove('radio-disabled');
+        });
+
+        const categoria = categoriasCursos[cursoSelecionado];
+        if (!categoria) return "";
+
+        let turnosDisponiveisStr = "todos os turnos";
+        let turnoPerdido = false;
+
+        if (categoria === 'exatas') {
+            radioVespertino.disabled = true;
+            radioVespertino.parentElement.classList.add('radio-disabled');
+            if (radioVespertino.checked) {
+                radioVespertino.checked = false;
+                turnoPerdido = true;
+            }
+            turnosDisponiveisStr = "apenas matutino e noturno";
+        } else if (categoria === 'humanas') {
+            radioMatutino.disabled = true;
+            radioMatutino.parentElement.classList.add('radio-disabled');
+            if (radioMatutino.checked) {
+                radioMatutino.checked = false;
+                turnoPerdido = true;
+            }
+            turnosDisponiveisStr = "apenas vespertino e noturno";
+        }
+
+        if (turnoPerdido) {
+            inputs.fieldsetTurno.classList.remove('is-valid', 'is-invalid', 'is-empty');
+            inputs.fieldsetTurno.removeAttribute('aria-invalid');
+            document.getElementById('erro-turno').style.display = 'none';
+        }
+
+        return turnosDisponiveisStr;
+    };
+
+    /**
+     * Recupera e preenche dados salvos na sessão atual.
+     */
     const carregarDadosSalvos = () => {
         const dados = JSON.parse(sessionStorage.getItem('dadosFormularioUndf'));
         if (dados) {
             if (dados.nome) inputs.nome.value = dados.nome;
             if (dados.email) inputs.email.value = dados.email;
             if (dados.telefone) inputs.telefone.value = dados.telefone; 
-            if (dados.curso) inputs.curso.value = dados.curso;
+            if (dados.curso) {
+                inputs.curso.value = dados.curso;
+                atualizarTurnosDisponiveis(dados.curso);
+            }
             if (dados.turno) {
                 const radio = document.querySelector(`input[name="turno"][value="${dados.turno}"]`);
-                if (radio) radio.checked = true;
+                if (radio && !radio.disabled) radio.checked = true;
             }
             checarBotaoGeral();
         }
     };
 
-    // Remove acentuação e converte para letras minúsculas.
     const removerAcentos = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-    // Controla a exibição do menu de autocompletar e os atributos ARIA
+    /**
+     * Alterna a visibilidade e atributos ARIA do menu suspenso de cursos.
+     */
     const toggleListaCursos = (mostrar) => {
         const lista = document.getElementById('lista-cursos');
         if (mostrar) {
@@ -89,12 +165,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Gera a lista suspensa com base na busca do usuário
+    /**
+     * Filtra e renderiza as opções de cursos com base na digitação do usuário.
+     */
     const renderizarCursos = (termo, forcarAbrir = false) => {
         const lista = document.getElementById('lista-cursos');
         lista.innerHTML = ''; 
         
-        // Esconde a lista se o campo estiver vazio e a abertura não for forçada pela seta
         if (termo.length === 0 && !forcarAbrir) {
             toggleListaCursos(false);
             return;
@@ -103,18 +180,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const filtrados = cursosDisponiveis.filter(c => removerAcentos(c).includes(removerAcentos(termo)));
         
         if (filtrados.length > 0) {
+            falarParaLeitor(`${filtrados.length} cursos encontrados. Pressione seta para baixo para explorar a lista.`);
+            
             filtrados.forEach((c) => {
                 const li = document.createElement('li');
                 li.textContent = c;
-                li.tabIndex = -1; // Remove do fluxo do TAB, permitindo apenas navegação por setas
+                li.tabIndex = -1; 
                 li.setAttribute('role', 'option');
+                li.setAttribute('aria-selected', 'false');
+
+                li.addEventListener('focus', () => li.setAttribute('aria-selected', 'true'));
+                li.addEventListener('blur', () => li.setAttribute('aria-selected', 'false'));
 
                 li.addEventListener('mousedown', (evt) => { 
                     evt.preventDefault(); 
                     selecionarCurso(c);
                 });
 
-                // Navegação por Teclado dentro da lista (Seta Cima/Baixo, Enter e Esc)
                 li.addEventListener('keydown', (evt) => {
                     if (evt.key === 'Enter') {
                         evt.preventDefault();
@@ -129,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (evt.key === 'Escape') {
                         toggleListaCursos(false);
                         inputs.curso.focus();
+                        falarParaLeitor('Lista de cursos fechada.');
                     }
                 });
 
@@ -140,66 +223,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Dispara a filtragem a cada nova digitação
     inputs.curso.addEventListener('input', (e) => {
+        inputs.curso.setAttribute('aria-describedby', 'instrucao-curso erro-curso');
         renderizarCursos(e.target.value);
     });
 
-    // Permite expandir a lista com a Seta para Baixo direto do campo de texto
     inputs.curso.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            const lista = document.getElementById('lista-cursos');
+            if (e.altKey) e.preventDefault(); 
             
-            // Força a renderização com true para exibir toda a lista se o campo estiver vazio
+            const lista = document.getElementById('lista-cursos');
             if (lista.classList.contains('hidden')) {
                 if (inputs.curso.value.trim() === '') {
-                    lista.innerHTML = ''; 
-                    cursosDisponiveis.forEach((c) => {
-                        const li = document.createElement('li');
-                        li.textContent = c;
-                        li.tabIndex = -1; 
-                        li.setAttribute('role', 'option');
-                        li.addEventListener('mousedown', (evt) => { evt.preventDefault(); selecionarCurso(c); });
-                        li.addEventListener('keydown', (evt) => {
-                            if (evt.key === 'Enter') { evt.preventDefault(); selecionarCurso(c); }
-                            else if (evt.key === 'ArrowDown') { evt.preventDefault(); if (li.nextSibling) li.nextSibling.focus(); }
-                            else if (evt.key === 'ArrowUp') { evt.preventDefault(); if (li.previousSibling) li.previousSibling.focus(); else inputs.curso.focus(); }
-                            else if (evt.key === 'Escape') { lista.classList.add('hidden'); inputs.curso.focus(); }
-                        });
-                        lista.appendChild(li);
-                    });
-                    lista.classList.remove('hidden');
+                    renderizarCursos('', true);
                 } else {
                     inputs.curso.dispatchEvent(new Event('input'));
                 }
             }
-            
-            // Pequeno delay para garantir que o DOM renderizou as "lis"
             setTimeout(() => {
                 const firstLi = document.querySelector('#lista-cursos li');
                 if (firstLi) firstLi.focus();
-            }, 50);
+            }, 100);
         } else if (e.key === 'Escape') {
             document.getElementById('lista-cursos').classList.add('hidden');
         }
     });
 
-    // Define o valor do input de curso, oculta a lista e dispara validações.
+    /**
+     * Registra o curso selecionado, oculta a instrução completa, restringe turnos e executa a validação.
+     */
     const selecionarCurso = (cursoNome) => {
         inputs.curso.value = cursoNome;
         document.getElementById('lista-cursos').classList.add('hidden');
-        validarCurso();
+        
+        const infoTurnos = atualizarTurnosDisponiveis(cursoNome);
+        falarParaLeitor(`Curso ${cursoNome} selecionado com sucesso. Opções de turno filtradas: ${infoTurnos} disponíveis.`);
+        
+        inputs.curso.setAttribute('aria-describedby', 'erro-curso'); 
+        validarCurso(true); 
         checarBotaoGeral();
         inputs.curso.focus(); 
     };
 
-    // Impede o usuário de inserir o caractere "@" no campo de e-mail.
     inputs.email.addEventListener('input', (e) => {
         if(e.target.value.includes('@')) e.target.value = e.target.value.split('@')[0];
     });
 
-    // Formata o número de telefone em tempo real.
     inputs.telefone.addEventListener('input', (e) => {
         let v = e.target.value.replace(/\D/g, ''); 
         if (v.length > 11) v = v.slice(0, 11);
@@ -209,7 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.target.value = formatado;
     });
 
-    // Salva automaticamente todos os dados no session storage ao digitar.
+    /**
+     * Salva o estado dos inputs a cada alteração.
+     */
     form.addEventListener('input', () => {
         const turnoSelecionado = document.querySelector('input[name="turno"]:checked');
         sessionStorage.setItem('dadosFormularioUndf', JSON.stringify({
@@ -222,138 +293,225 @@ document.addEventListener('DOMContentLoaded', () => {
         checarBotaoGeral();
     });
 
-    // Atualiza as classes CSS do elemento e exibe a mensagem de feedback.
-    const setStatus = (elemento, status, mensagem) => {
-        const spanId = elemento.getAttribute('aria-describedby');
+    /**
+     * Sistema central de feedback visual e gestão de status ARIA para cada campo do formulário.
+     */
+    const setStatus = (elemento, status, mensagemVisual, nomeCampo, perdeuFoco = false, mensagemAcessibilidadeExtra = "") => {
+        const spanIdArray = elemento.getAttribute('aria-describedby');
+        if(!spanIdArray) return;
+        
+        const spanId = spanIdArray.split(' ').find(id => id.startsWith('erro-'));
         const spanMsg = document.getElementById(spanId);
         
         elemento.classList.remove('is-valid', 'is-invalid', 'is-empty');
         spanMsg.style.display = 'block'; 
         
-        if (status === 'erro') {
-            elemento.classList.add('is-invalid');
+        if (status === 'erro' || status === 'vazio') {
+            const isErro = status === 'erro';
+            const iconeHtml = `<span aria-hidden="true">${isErro ? '❌' : '⚠️'}</span>`;
+            const prefixoVisual = isErro ? ' Erro: ' : ' Atenção: ';
+            
+            elemento.classList.add(isErro ? 'is-invalid' : 'is-empty');
             elemento.setAttribute('aria-invalid', 'true');
-            spanMsg.innerHTML = '❌ Erro: ' + mensagem;
-            spanMsg.style.color = 'var(--cor-erro)';
-        } else if (status === 'vazio') {
-            elemento.classList.add('is-empty');
-            elemento.setAttribute('aria-invalid', 'false');
-            spanMsg.innerHTML = '⚠️ Atenção: ' + mensagem;
-            spanMsg.style.color = 'var(--cor-aviso)';
+            spanMsg.innerHTML = iconeHtml + prefixoVisual + mensagemVisual;
+            spanMsg.style.color = isErro ? 'var(--cor-erro)' : 'var(--cor-aviso)';
+            
+            if (perdeuFoco) {
+                const textoNarrador = mensagemAcessibilidadeExtra || mensagemVisual;
+                falarParaLeitor(`Alerta. O campo "${nomeCampo}" possui um erro. ${textoNarrador}. Pressione Shift e Tab juntos para voltar e corrigir.`, true);
+            }
         } else if (status === 'sucesso') {
             elemento.classList.add('is-valid');
             elemento.setAttribute('aria-invalid', 'false');
-            spanMsg.innerHTML = '✅ OK';
+            spanMsg.innerHTML = '<span aria-hidden="true">✅</span> OK';
             spanMsg.style.color = 'var(--cor-sucesso)';
+            
+            if (perdeuFoco && elemento.value) {
+                falarParaLeitor(`Campo ${nomeCampo} preenchido corretamente.`, false);
+            }
         }
     };
 
-    // Valida o nome checando caracteres permitidos, quantidade de palavras e tamanho.
-    const validarNome = () => {
+    /**
+     * Validações específicas por campo.
+     */
+    const validarNome = (perdeuFoco = false) => {
         const valor = inputs.nome.value.trim();
         const palavras = valor.split(/\s+/); 
         const minimoDuasLetras = palavras.every(p => p.length >= 2);
-        
         const regexNomeValido = /^[a-zA-ZÀ-ÿ\s']+$/;
         
         if (valor === "") {
-            setStatus(inputs.nome, 'vazio', "Campo vazio. Insira seu nome completo.");
+            setStatus(inputs.nome, 'vazio', "Campo vazio. Insira seu nome completo.", "Nome Completo", perdeuFoco);
         } else if (!regexNomeValido.test(valor)) {
-            setStatus(inputs.nome, 'erro', "Símbolos e números não são permitidos. Use apenas letras.");
+            setStatus(inputs.nome, 'erro', "Símbolos e números não são permitidos. Use apenas letras.", "Nome Completo", perdeuFoco);
         } else if (palavras.length < 2 || !minimoDuasLetras) {
-            setStatus(inputs.nome, 'erro', "Insira seu nome completo");
+            setStatus(inputs.nome, 'erro', "Insira seu nome completo", "Nome Completo", perdeuFoco, "Nome incompleto. Digite pelo menos um nome e um sobrenome.");
         } else {
-            setStatus(inputs.nome, 'sucesso', "");
+            setStatus(inputs.nome, 'sucesso', "", "Nome Completo", perdeuFoco);
         }
     };
 
-    // Valida o prefixo do e-mail barrando símbolos indesejados e checando o formato.
-    const validarEmail = () => {
+    const validarEmail = (perdeuFoco = false) => {
         const valor = inputs.email.value.trim();
-        
         const regexCaracteresValidos = /^[a-zA-Z0-9.]+$/;
         const regexFormato = /^[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}$/;
         
         if (valor === "") {
-            setStatus(inputs.email, 'vazio', "Campo vazio. Insira seu email.");
+            setStatus(inputs.email, 'vazio', "Campo vazio. Insira seu email.", "E-mail Institucional", perdeuFoco);
         } else if (!regexCaracteresValidos.test(valor)) {
-            setStatus(inputs.email, 'erro', "Símbolos e acentos não permitidos. Use letras, números e um ponto.");
+            setStatus(inputs.email, 'erro', "Símbolos e acentos não permitidos. Use letras, números e um ponto.", "E-mail Institucional", perdeuFoco);
         } else if (!regexFormato.test(valor)) {
-            setStatus(inputs.email, 'erro', "Insira seu email institucional, no formato nome.sobrenome, o sistema completa o restante.");
+            setStatus(inputs.email, 'erro', "Insira seu email institucional, no formato nome.sobrenome.", "E-mail Institucional", perdeuFoco);
         } else {
-            setStatus(inputs.email, 'sucesso', "");
+            setStatus(inputs.email, 'sucesso', "", "E-mail Institucional", perdeuFoco);
         }
     };
 
-    // Valida o número de caracteres numéricos do telefone.
-    const validarTelefone = () => {
+    const validarTelefone = (perdeuFoco = false) => {
         const nums = inputs.telefone.value.replace(/\D/g, '');
-        if (nums === "") setStatus(inputs.telefone, 'vazio', "Campo vazio. Insira seu número de telefone.");
-        else if (nums.length !== 11) setStatus(inputs.telefone, 'erro', "Insira os 11 dígitos (DDD + 9 números).");
-        else setStatus(inputs.telefone, 'sucesso', "");
-    };
-
-    // Verifica se a entrada do campo curso corresponde a um item da lista.
-    const validarCurso = () => {
-        const valor = inputs.curso.value.trim();
-        const cursoValido = cursosDisponiveis.some(c => c.toLowerCase() === valor.toLowerCase());
-
-        if (valor === "") setStatus(inputs.curso, 'vazio', "Campo vazio. Pesquise e selecione o seu Curso.");
-        else if (!cursoValido) setStatus(inputs.curso, 'erro', "Selecione um curso válido na lista apresentada.");
-        else {
-            inputs.curso.value = cursosDisponiveis.find(c => c.toLowerCase() === valor.toLowerCase());
-            setStatus(inputs.curso, 'sucesso', "");
+        if (nums === "") {
+            setStatus(inputs.telefone, 'vazio', "Campo vazio. Insira seu número de telefone.", "Telefone", perdeuFoco);
+        } else if (nums.length !== 11) {
+            setStatus(inputs.telefone, 'erro', "Insira os 11 dígitos (DDD + 9 números).", "Telefone", perdeuFoco, "Faltam dígitos. Insira os 2 dígitos do DDD e os 9 do número do telefone.");
+        } else {
+            setStatus(inputs.telefone, 'sucesso', "", "Telefone", perdeuFoco);
         }
     };
 
-    // Verifica se há seleção no rádio de turno.
-    const validarTurno = () => {
-        const preenchido = Array.from(inputs.turnos).some(r => r.checked);
-        if (!preenchido) setStatus(inputs.fieldsetTurno, 'vazio', "Escolha o turno do seu curso.");
-        else setStatus(inputs.fieldsetTurno, 'sucesso', "");
+    const validarCurso = (perdeuFoco = false) => {
+        const valor = inputs.curso.value.trim();
+        const cursoValido = cursosDisponiveis.find(c => c.toLowerCase() === valor.toLowerCase());
+
+        if (valor === "") {
+            setStatus(inputs.curso, 'vazio', "Campo vazio. Pesquise e selecione o seu Curso.", "Curso", perdeuFoco);
+            atualizarTurnosDisponiveis("");
+        } else if (!cursoValido) {
+            setStatus(inputs.curso, 'erro', "Selecione um curso válido na lista apresentada.", "Curso", perdeuFoco);
+            atualizarTurnosDisponiveis("");
+        } else {
+            inputs.curso.value = cursoValido;
+            setStatus(inputs.curso, 'sucesso', "", "Curso", perdeuFoco);
+            atualizarTurnosDisponiveis(cursoValido);
+        }
     };
 
-    // Dispara validações no evento blur.
-    inputs.nome.addEventListener('blur', validarNome);
-    inputs.email.addEventListener('blur', validarEmail);
-    inputs.telefone.addEventListener('blur', validarTelefone);
+    const validarTurno = (perdeuFoco = false) => {
+        const preenchido = Array.from(inputs.turnos).some(r => r.checked);
+        if (!preenchido) setStatus(inputs.fieldsetTurno, 'vazio', "Escolha o turno do seu curso.", "Turno do Curso", perdeuFoco);
+        else {
+            setStatus(inputs.fieldsetTurno, 'sucesso', "", "Turno do Curso", perdeuFoco);
+        }
+    };
+
+    inputs.nome.addEventListener('blur', () => { validarNome(true); checarBotaoGeral(); });
+    inputs.email.addEventListener('blur', () => { validarEmail(true); checarBotaoGeral(); });
+    inputs.telefone.addEventListener('blur', () => { validarTelefone(true); checarBotaoGeral(); });
     
-    // Oculta a lista de cursos ao perder foco no container.
     const dropdownContainer = document.querySelector('.dropdown-container');
     dropdownContainer.addEventListener('focusout', (e) => {
         if (!dropdownContainer.contains(e.relatedTarget)) {
             document.getElementById('lista-cursos').classList.add('hidden');
-            validarCurso();
+            validarCurso(true);
+            checarBotaoGeral();
         }
     });
 
-    // Valida ao perder foco do fieldset.
     inputs.fieldsetTurno.addEventListener('focusout', (e) => {
-        if (!inputs.fieldsetTurno.contains(e.relatedTarget)) validarTurno();
+        if (!inputs.fieldsetTurno.contains(e.relatedTarget)) {
+            validarTurno(true);
+            checarBotaoGeral();
+        }
     });
-    inputs.turnos.forEach(radio => radio.addEventListener('change', validarTurno));
+    inputs.turnos.forEach(radio => radio.addEventListener('change', () => {
+        validarTurno(false);
+        checarBotaoGeral();
+    }));
 
-    // Define o atributo disabled do botão enviar com base na validação de todos os campos.
+    /**
+     * Avalia o status do formulário, gerencia o estado ARIA do botão e atualiza o feedback visual com mascaramento de ícones.
+     */
     const checarBotaoGeral = () => {
         const pNome = inputs.nome.value.trim().split(/\s+/);
         const regexNome = /^[a-zA-ZÀ-ÿ\s']+$/;
         const n = pNome.length >= 2 && pNome.every(p => p.length >= 2) && regexNome.test(inputs.nome.value.trim());
-        
-        const regexEmail = /^[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}$/;
-        const em = regexEmail.test(inputs.email.value.trim());
-        
+        const em = /^[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}$/.test(inputs.email.value.trim());
         const t = inputs.telefone.value.replace(/\D/g, '').length === 11;
         const c = cursosDisponiveis.some(curso => curso.toLowerCase() === inputs.curso.value.trim().toLowerCase());
         const tu = Array.from(inputs.turnos).some(r => r.checked);
         
-        btnEnviar.disabled = !(n && em && t && c && tu);
+        const formValido = (n && em && t && c && tu);
+        
+        btnEnviar.setAttribute('aria-disabled', !formValido ? 'true' : 'false');
+
+        const feedbackBotao = document.getElementById('feedback-botao-enviar');
+        if (!feedbackBotao) return;
+
+        const camposComErro = document.querySelectorAll('.is-invalid, .is-empty');
+
+        const formVazio = inputs.nome.value.trim() === '' && 
+                          inputs.email.value.trim() === '' && 
+                          inputs.telefone.value.replace(/\D/g, '') === '' && 
+                          inputs.curso.value.trim() === '' && 
+                          !tu;
+
+        if (formVazio && camposComErro.length === 0) {
+            feedbackBotao.innerHTML = "";
+            feedbackBotao.style.display = "none";
+            return;
+        }
+
+        if (formValido) {
+            feedbackBotao.innerHTML = '<span aria-hidden="true">✅</span> Todos os campos estão corretos. Pronto para enviar!';
+            feedbackBotao.style.color = "var(--cor-sucesso)";
+            feedbackBotao.style.display = "block";
+        } else {
+            if (camposComErro.length === 1) {
+                const elementoComErro = camposComErro[0];
+                const spanIdArray = elementoComErro.getAttribute('aria-describedby');
+                
+                if (spanIdArray) {
+                    const spanId = spanIdArray.split(' ').find(id => id.startsWith('erro-'));
+                    const spanMsg = document.getElementById(spanId);
+                    
+                    if (spanMsg) {
+                        let nomeDoCampo = "Campo";
+                        if (elementoComErro.id === 'fieldset-turno') {
+                            nomeDoCampo = "Turno do Curso";
+                        } else {
+                            const label = document.querySelector(`label[for="${elementoComErro.id}"]`);
+                            if (label) nomeDoCampo = label.textContent;
+                        }
+
+                        let textoErro = spanMsg.textContent.replace('❌ Erro: ', '').replace('⚠️ Atenção: ', '').replace('✅ OK', '');
+                        const isInvalid = elementoComErro.classList.contains('is-invalid');
+                        const icone = isInvalid ? '❌' : '⚠️';
+                        const locucaoAria = isInvalid ? 'Erro:' : 'Atenção:';
+                        
+                        feedbackBotao.innerHTML = `<span aria-hidden="true">${icone}</span> <span class="sr-only">${locucaoAria}</span> Corrija o campo <strong>${nomeDoCampo}</strong>:<br>${textoErro}`;
+                        feedbackBotao.style.color = isInvalid ? 'var(--cor-erro)' : 'var(--cor-aviso)';
+                        feedbackBotao.style.display = "block";
+                    }
+                }
+            } else if (camposComErro.length > 1) {
+                feedbackBotao.innerHTML = '<span aria-hidden="true">⚠️</span> <span class="sr-only">Atenção:</span> Verifique os campos anteriores: preencha e corrija todos os dados acima para liberar o envio.';
+                feedbackBotao.style.color = "var(--cor-aviso)";
+                feedbackBotao.style.display = "block";
+            } else {
+                feedbackBotao.innerHTML = "";
+                feedbackBotao.style.display = "none";
+            }
+        }
     };
 
-    // Manipula a exibição da janela modal de feedback e alterna a visibilidade dos botões.
+    /**
+     * Exibe os modais de sucesso ou erro, aplicando a trava de foco para acessibilidade (Focus Trap).
+     */
     const mostrarModal = (tipo, titulo, texto) => {
         const modal = document.getElementById('modal-feedback');
         const box = document.getElementById('modal-box');
         const icone = document.getElementById('modal-icon');
+        const mainContainer = document.querySelector('main.container');
         
         document.getElementById('modal-title').textContent = titulo;
         document.getElementById('modal-desc').textContent = texto;
@@ -364,31 +522,76 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-erro-cancelar').classList.add('hidden');
         
         if (tipo === 'sucesso') {
-            icone.textContent = '✅';
+            icone.innerHTML = '<span aria-hidden="true">✅</span>';
             document.getElementById('modal-title').style.color = 'var(--cor-sucesso)';
             box.classList.add('modal-sucesso');
             document.getElementById('btn-sucesso-ok').classList.remove('hidden');
+            falarParaLeitor(`Cadastro com sucesso. ${texto}`, true);
         } else {
-            icone.textContent = '❌';
+            icone.innerHTML = '<span aria-hidden="true">❌</span>';
             document.getElementById('modal-title').style.color = 'var(--cor-erro)';
             box.classList.add('modal-erro');
             document.getElementById('btn-erro-tentar').classList.remove('hidden');
             document.getElementById('btn-erro-cancelar').classList.remove('hidden');
+            falarParaLeitor(`Erro no envio. ${texto}`, true);
         }
+        
+        if (mainContainer) mainContainer.setAttribute('aria-hidden', 'true');
         modal.classList.remove('hidden');
+
+        setTimeout(() => {
+            if (tipo === 'sucesso') document.getElementById('btn-sucesso-ok').focus();
+            else document.getElementById('btn-erro-tentar').focus();
+        }, 50);
     };
 
-    const esconderModal = () => document.getElementById('modal-feedback').classList.add('hidden');
+    /**
+     * Remove o modal e devolve a visibilidade do formulário ao leitor de tela.
+     */
+    const esconderModal = () => {
+        const mainContainer = document.querySelector('main.container');
+        document.getElementById('modal-feedback').classList.add('hidden');
+        if (mainContainer) mainContainer.removeAttribute('aria-hidden');
+    };
 
-    document.getElementById('btn-sucesso-ok').addEventListener('click', esconderModal);
+    // Trava de Foco (Focus Trap) para manter a navegação de teclado dentro do modal
+    const modalFeedback = document.getElementById('modal-feedback');
+    modalFeedback.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            const focusableElements = modalFeedback.querySelectorAll('button:not(.hidden)');
+            if (focusableElements.length === 0) return;
 
-    // Usa requestSubmit ao invés de clique para garantir que a tela de Loading reapareça.
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+    });
+
+    document.getElementById('btn-sucesso-ok').addEventListener('click', () => {
+        esconderModal();
+        inputs.nome.focus(); 
+    });
+
     document.getElementById('btn-erro-tentar').addEventListener('click', () => {
+        btnEnviar.focus(); 
         esconderModal();
         form.requestSubmit(btnEnviar); 
     });
 
-    // Limpa os dados do formulário, remove armazenamento e formatação.
+    /**
+     * Restaura o formulário ao seu estado inicial e limpa os feedbacks visuais.
+     */
     document.getElementById('btn-erro-cancelar').addEventListener('click', () => {
         esconderModal();
         form.reset();
@@ -396,27 +599,66 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.querySelectorAll('.is-valid, .is-invalid, .is-empty').forEach(el => {
             el.classList.remove('is-valid', 'is-invalid', 'is-empty');
-            el.setAttribute('aria-invalid', 'false');
+            el.removeAttribute('aria-invalid');
         });
         document.querySelectorAll('.msg-feedback').forEach(el => {
             el.style.display = 'none'; 
             el.innerHTML = '';
         });
-        btnEnviar.disabled = true;
+        
+        btnEnviar.setAttribute('aria-disabled', 'true');
+        
+        const radios = document.querySelectorAll('.radio-item input[type="radio"]');
+        radios.forEach(r => {
+            r.disabled = false;
+            r.parentElement.classList.remove('radio-disabled');
+        });
+
+        const feedbackBotao = document.getElementById('feedback-botao-enviar');
+        if (feedbackBotao) {
+            feedbackBotao.style.display = 'none';
+            feedbackBotao.innerHTML = '';
+        }
+
+        inputs.nome.focus();
+        checarBotaoGeral();
+        falarParaLeitor('Formulário limpo e resetado.', true);
     });
 
-    // Intercepta submit e realiza requisição POST com fetch.
+    // Trava de Foco (Focus Trap) temporária apenas para a tela de Loading
+    const blockTabHandler = (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const loadingBox = document.querySelector('.loading-box');
+            if (loadingBox) loadingBox.focus();
+        }
+    };
+
+    /**
+     * Intercepta o envio do formulário, gerencia o roteamento de foco e realiza chamadas de rede.
+     */
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         validarNome(); validarEmail(); validarTelefone(); validarCurso(); validarTurno();
-        if (btnEnviar.disabled) return;
+        checarBotaoGeral();
+        
+        if (btnEnviar.getAttribute('aria-disabled') === 'true') return;
 
         const telaLoading = document.getElementById('tela-loading');
+        const mainContainer = document.querySelector('main.container');
+        const loadingBox = telaLoading.querySelector('.loading-box');
+
+        if (mainContainer) mainContainer.setAttribute('aria-hidden', 'true');
         telaLoading.classList.remove('hidden');
-        btnEnviar.disabled = true;
+        
+        if (loadingBox) loadingBox.focus();
+        
+        document.addEventListener('keydown', blockTabHandler);
+        
+        btnEnviar.setAttribute('aria-disabled', 'true');
+        falarParaLeitor('Enviando dados, por favor aguarde...', true);
 
         try {
-            // Atraso inserido NO INÍCIO do try para garantir que o Loading apareça primeiro, mesmo se a rede falhar.
             await new Promise(r => setTimeout(r, 1000)); 
 
             const resposta = await fetch('https://jsonplaceholder.typicode.com/posts', {
@@ -433,6 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!resposta.ok) throw new Error('Erro de Rede');
 
+            document.removeEventListener('keydown', blockTabHandler);
             telaLoading.classList.add('hidden');
             mostrarModal('sucesso', 'Cadastro concluído!', 'Suas informações foram salvas. Verifique seu e-mail institucional em breve.');
             
@@ -441,19 +684,35 @@ document.addEventListener('DOMContentLoaded', () => {
             
             document.querySelectorAll('.is-valid, .is-invalid, .is-empty').forEach(el => {
                 el.classList.remove('is-valid', 'is-invalid', 'is-empty');
-                el.setAttribute('aria-invalid', 'false');
+                el.removeAttribute('aria-invalid');
             });
             document.querySelectorAll('.msg-feedback').forEach(el => {
                 el.style.display = 'none'; 
                 el.innerHTML = '';
             });
 
+            const radios = document.querySelectorAll('.radio-item input[type="radio"]');
+            radios.forEach(r => {
+                r.disabled = false;
+                r.parentElement.classList.remove('radio-disabled');
+            });
+
+            const feedbackBotao = document.getElementById('feedback-botao-enviar');
+            if (feedbackBotao) {
+                feedbackBotao.style.display = 'none';
+                feedbackBotao.innerHTML = '';
+            }
+
+            checarBotaoGeral();
+
         } catch (erro) {
+            document.removeEventListener('keydown', blockTabHandler);
             telaLoading.classList.add('hidden');
             mostrarModal('erro', 'Falha na conexão', 'Ocorreu um erro ao enviar. Seus dados estão salvos. O que deseja fazer?');
-            btnEnviar.disabled = false;
+            btnEnviar.setAttribute('aria-disabled', 'false');
         }
     });
 
     carregarDadosSalvos();
+    checarBotaoGeral();
 });
