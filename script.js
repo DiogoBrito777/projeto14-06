@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     
+    // =========================================================
+    // ENCAPSULAMENTO DE STORAGE (Proteção contra erros de bloqueio)
+    // =========================================================
+    const safeSetLocalStorage = (key, value) => { try { localStorage.setItem(key, value); } catch(e){} };
+    const safeGetLocalStorage = (key) => { try { return localStorage.getItem(key); } catch(e){ return null; } };
+    const safeSetSessionStorage = (key, value) => { try { sessionStorage.setItem(key, value); } catch(e){} };
+    const safeGetSessionStorage = (key) => { try { return sessionStorage.getItem(key); } catch(e){ return null; } };
+    const safeRemoveSessionStorage = (key) => { try { sessionStorage.removeItem(key); } catch(e){} };
+
     const anunciadorPolite = document.getElementById('anunciador-polite');
     const anunciadorAssertive = document.getElementById('anunciador-assertive');
 
@@ -29,16 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.setAttribute('data-theme', 'dark');
             iconeTema.textContent = '☀️';
             if (imgLogo) imgLogo.src = 'logo_undf_dark.png';
-            localStorage.setItem('temaFormulario', 'dark');
+            safeSetLocalStorage('temaFormulario', 'dark');
         } else {
             document.documentElement.removeAttribute('data-theme');
             iconeTema.textContent = '🌙';
             if (imgLogo) imgLogo.src = 'logo_undf.png';
-            localStorage.setItem('temaFormulario', 'light');
+            safeSetLocalStorage('temaFormulario', 'light');
         }
     };
 
-    const temaSalvo = localStorage.getItem('temaFormulario');
+    const temaSalvo = safeGetLocalStorage('temaFormulario');
     const prefereEscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (temaSalvo === 'dark' || (!temaSalvo && prefereEscuro)) aplicarTema(true);
     else aplicarTema(false);
@@ -53,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.getElementById('form-institucional');
     const btnEnviar = document.getElementById('btn-enviar');
+    let isSubmitting = false; // Trava física contra duplo envio
     
     const inputs = {
         nome: document.getElementById('nome'),
@@ -70,9 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
         "Dança", "Ciência da Computação", "Ciências Econômicas", "Psicologia", "Nutrição"
     ];
 
-    /**
-     * Mapeamento de regras de negócios dos cursos para definição de turnos permitidos.
-     */
     const categoriasCursos = {
         "Matemática": "exatas", "Engenharia de Software": "exatas", "Sistemas de Informação": "exatas", "Ciência da Computação": "exatas",
         "Gestão Ambiental": "gestao", "Gestão Pública": "gestao", "Gestão da Tecnologia da Informação": "gestao",
@@ -81,10 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         "Psicologia": "humanas", "Nutrição": "humanas"
     };
 
-    /**
-     * Restringe as opções de turno disponíveis de acordo com a categoria do curso.
-     * Retorna a string de instrução para ser lida via acessibilidade.
-     */
     const atualizarTurnosDisponiveis = (cursoSelecionado) => {
         const radioMatutino = document.getElementById('turno-matutino');
         const radioVespertino = document.getElementById('turno-vespertino');
@@ -128,25 +131,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return turnosDisponiveisStr;
     };
 
-    /**
-     * Recupera e preenche dados salvos na sessão atual.
-     */
     const carregarDadosSalvos = () => {
-        const dados = JSON.parse(sessionStorage.getItem('dadosFormularioUndf'));
-        if (dados) {
-            if (dados.nome) inputs.nome.value = dados.nome;
-            if (dados.email) inputs.email.value = dados.email;
-            if (dados.telefone) inputs.telefone.value = dados.telefone; 
-            if (dados.curso) {
-                inputs.curso.value = dados.curso;
-                atualizarTurnosDisponiveis(dados.curso);
+        const dadosString = safeGetSessionStorage('dadosFormularioUndf');
+        if (!dadosString) return;
+        
+        try {
+            const dados = JSON.parse(dadosString);
+            if (dados) {
+                if (dados.nome) inputs.nome.value = dados.nome;
+                if (dados.email) inputs.email.value = dados.email;
+                if (dados.telefone) inputs.telefone.value = dados.telefone; 
+                if (dados.curso) {
+                    inputs.curso.value = dados.curso;
+                    atualizarTurnosDisponiveis(dados.curso);
+                }
+                if (dados.turno) {
+                    const radio = document.querySelector(`input[name="turno"][value="${dados.turno}"]`);
+                    if (radio && !radio.disabled) radio.checked = true;
+                }
+                checarBotaoGeral();
             }
-            if (dados.turno) {
-                const radio = document.querySelector(`input[name="turno"][value="${dados.turno}"]`);
-                if (radio && !radio.disabled) radio.checked = true;
-            }
-            checarBotaoGeral();
-        }
+        } catch(e){}
     };
 
     const removerAcentos = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -165,9 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    /**
-     * Filtra e renderiza as opções de cursos com base na digitação do usuário.
-     */
     const renderizarCursos = (termo, forcarAbrir = false) => {
         const lista = document.getElementById('lista-cursos');
         lista.innerHTML = ''; 
@@ -204,10 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (evt.key === 'ArrowDown') {
                         evt.preventDefault();
                         if (li.nextSibling) li.nextSibling.focus();
+                        else document.querySelector('#lista-cursos li').focus(); // Loop para o topo
                     } else if (evt.key === 'ArrowUp') {
                         evt.preventDefault();
                         if (li.previousSibling) li.previousSibling.focus();
-                        else inputs.curso.focus(); 
+                        else inputs.curso.focus(); // Retorna ao input
                     } else if (evt.key === 'Escape') {
                         toggleListaCursos(false);
                         inputs.curso.focus();
@@ -245,16 +248,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (firstLi) firstLi.focus();
             }, 100);
         } else if (e.key === 'Escape') {
-            document.getElementById('lista-cursos').classList.add('hidden');
+            toggleListaCursos(false);
         }
     });
 
-    /**
-     * Registra o curso selecionado, oculta a instrução completa, restringe turnos e executa a validação.
-     */
     const selecionarCurso = (cursoNome) => {
         inputs.curso.value = cursoNome;
-        document.getElementById('lista-cursos').classList.add('hidden');
+        toggleListaCursos(false);
         
         const infoTurnos = atualizarTurnosDisponiveis(cursoNome);
         falarParaLeitor(`Curso ${cursoNome} selecionado com sucesso. Opções de turno filtradas: ${infoTurnos} disponíveis.`);
@@ -278,12 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.target.value = formatado;
     });
 
-    /**
-     * Salva o estado dos inputs a cada alteração.
-     */
     form.addEventListener('input', () => {
         const turnoSelecionado = document.querySelector('input[name="turno"]:checked');
-        sessionStorage.setItem('dadosFormularioUndf', JSON.stringify({
+        safeSetSessionStorage('dadosFormularioUndf', JSON.stringify({
             nome: inputs.nome.value,
             email: inputs.email.value,
             telefone: inputs.telefone.value,
@@ -293,9 +290,6 @@ document.addEventListener('DOMContentLoaded', () => {
         checarBotaoGeral();
     });
 
-    /**
-     * Sistema central de feedback visual e gestão de status ARIA para cada campo do formulário.
-     */
     const setStatus = (elemento, status, mensagemVisual, nomeCampo, perdeuFoco = false, mensagemAcessibilidadeExtra = "") => {
         const spanIdArray = elemento.getAttribute('aria-describedby');
         if(!spanIdArray) return;
@@ -332,9 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    /**
-     * Validações específicas por campo.
-     */
     const validarNome = (perdeuFoco = false) => {
         const valor = inputs.nome.value.trim();
         const palavras = valor.split(/\s+/); 
@@ -346,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (!regexNomeValido.test(valor)) {
             setStatus(inputs.nome, 'erro', "Símbolos e números não são permitidos. Use apenas letras.", "Nome Completo", perdeuFoco);
         } else if (palavras.length < 2 || !minimoDuasLetras) {
-            setStatus(inputs.nome, 'erro', "Insira seu nome completo, sem abreviação.", "Nome Completo", perdeuFoco, "Nome incompleto. Digite pelo menos um nome e um sobrenome.");
+            setStatus(inputs.nome, 'erro', "Insira seu nome completo, sem abreviações.", "Nome Completo", perdeuFoco, "Nome incompleto. Digite pelo menos um nome e um sobrenome sem abreviar.");
         } else {
             setStatus(inputs.nome, 'sucesso', "", "Nome Completo", perdeuFoco);
         }
@@ -411,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropdownContainer = document.querySelector('.dropdown-container');
     dropdownContainer.addEventListener('focusout', (e) => {
         if (!dropdownContainer.contains(e.relatedTarget)) {
-            document.getElementById('lista-cursos').classList.add('hidden');
+            toggleListaCursos(false); 
             validarCurso(true);
             checarBotaoGeral();
         }
@@ -428,9 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
         checarBotaoGeral();
     }));
 
-    /**
-     * Avalia o status do formulário, gerencia o estado ARIA do botão e atualiza o feedback visual com mascaramento de ícones.
-     */
     const checarBotaoGeral = () => {
         const pNome = inputs.nome.value.trim().split(/\s+/);
         const regexNome = /^[a-zA-ZÀ-ÿ\s']+$/;
@@ -504,9 +492,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    /**
-     * Exibe os modais de sucesso ou erro, aplicando a trava de foco para acessibilidade (Focus Trap).
-     */
     const mostrarModal = (tipo, titulo, texto) => {
         const modal = document.getElementById('modal-feedback');
         const box = document.getElementById('modal-box');
@@ -545,16 +530,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 50);
     };
 
-    /**
-     * Remove o modal e devolve a visibilidade do formulário ao leitor de tela.
-     */
     const esconderModal = () => {
         const mainContainer = document.querySelector('main.container');
         document.getElementById('modal-feedback').classList.add('hidden');
         if (mainContainer) mainContainer.removeAttribute('aria-hidden');
     };
 
-    // Trava de Foco (Focus Trap) para manter a navegação de teclado dentro do modal
     const modalFeedback = document.getElementById('modal-feedback');
     modalFeedback.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') {
@@ -589,13 +570,10 @@ document.addEventListener('DOMContentLoaded', () => {
         form.requestSubmit(btnEnviar); 
     });
 
-    /**
-     * Restaura o formulário ao seu estado inicial e limpa os feedbacks visuais.
-     */
-    document.getElementById('btn-erro-cancelar').addEventListener('click', () => {
+    const resetarFormulario = () => {
         esconderModal();
         form.reset();
-        sessionStorage.removeItem('dadosFormularioUndf');
+        safeRemoveSessionStorage('dadosFormularioUndf');
         
         document.querySelectorAll('.is-valid, .is-invalid, .is-empty').forEach(el => {
             el.classList.remove('is-valid', 'is-invalid', 'is-empty');
@@ -605,6 +583,8 @@ document.addEventListener('DOMContentLoaded', () => {
             el.style.display = 'none'; 
             el.innerHTML = '';
         });
+        
+        inputs.curso.setAttribute('aria-describedby', 'instrucao-curso erro-curso');
         
         btnEnviar.setAttribute('aria-disabled', 'true');
         
@@ -622,10 +602,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         inputs.nome.focus();
         checarBotaoGeral();
+    };
+
+    document.getElementById('btn-erro-cancelar').addEventListener('click', () => {
+        resetarFormulario();
         falarParaLeitor('Formulário limpo e resetado.', true);
     });
 
-    // Trava de Foco (Focus Trap) temporária apenas para a tela de Loading
     const blockTabHandler = (e) => {
         if (e.key === 'Tab') {
             e.preventDefault();
@@ -634,15 +617,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    /**
-     * Intercepta o envio do formulário, gerencia o roteamento de foco e realiza chamadas de rede.
-     */
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         validarNome(); validarEmail(); validarTelefone(); validarCurso(); validarTurno();
         checarBotaoGeral();
         
-        if (btnEnviar.getAttribute('aria-disabled') === 'true') return;
+        if (isSubmitting || btnEnviar.getAttribute('aria-disabled') === 'true') return;
+
+        isSubmitting = true;
 
         const telaLoading = document.getElementById('tela-loading');
         const mainContainer = document.querySelector('main.container');
@@ -679,37 +661,15 @@ document.addEventListener('DOMContentLoaded', () => {
             telaLoading.classList.add('hidden');
             mostrarModal('sucesso', 'Cadastro concluído!', 'Suas informações foram salvas. Verifique seu e-mail institucional em breve.');
             
-            form.reset();
-            sessionStorage.removeItem('dadosFormularioUndf');
-            
-            document.querySelectorAll('.is-valid, .is-invalid, .is-empty').forEach(el => {
-                el.classList.remove('is-valid', 'is-invalid', 'is-empty');
-                el.removeAttribute('aria-invalid');
-            });
-            document.querySelectorAll('.msg-feedback').forEach(el => {
-                el.style.display = 'none'; 
-                el.innerHTML = '';
-            });
-
-            const radios = document.querySelectorAll('.radio-item input[type="radio"]');
-            radios.forEach(r => {
-                r.disabled = false;
-                r.parentElement.classList.remove('radio-disabled');
-            });
-
-            const feedbackBotao = document.getElementById('feedback-botao-enviar');
-            if (feedbackBotao) {
-                feedbackBotao.style.display = 'none';
-                feedbackBotao.innerHTML = '';
-            }
-
-            checarBotaoGeral();
+            resetarFormulario(); 
+            isSubmitting = false; 
 
         } catch (erro) {
             document.removeEventListener('keydown', blockTabHandler);
             telaLoading.classList.add('hidden');
             mostrarModal('erro', 'Falha na conexão', 'Ocorreu um erro ao enviar. Seus dados estão salvos. O que deseja fazer?');
             btnEnviar.setAttribute('aria-disabled', 'false');
+            isSubmitting = false; 
         }
     });
 

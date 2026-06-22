@@ -28,14 +28,14 @@
             
             <div class="form-group">
                 <label for="nome">Nome Completo</label>
-                <span id="instrucao-nome" class="sr-only">Insira seu nome completo, sem abrevição, usando apenas letras. Campo obrigatório.</span>
+                <span id="instrucao-nome" class="sr-only">Sem abreviações, usando apenas letras. Campo obrigatório.</span>
                 <input type="text" id="nome" name="nome" placeholder="ex: Samuel Oliveira" aria-describedby="instrucao-nome erro-nome" autocomplete="name" required spellcheck="false">
                 <span id="erro-nome" class="msg-feedback"></span>
             </div>
 
             <div class="form-group">
                 <label for="email">E-mail Institucional</label>
-                <span id="instrucao-email" class="sr-only">Insira apenas a primeira parte do seu e-mail, no formato nome.sobrenome. O domínio arroba undf ponto edu ponto br já está preenchido. Campo obrigatório.</span>
+                <span id="instrucao-email" class="sr-only">Insira a primeira parte, formato nome ponto sobrenome. O domínio arroba undf ponto edu ponto br já está preenchido. Campo obrigatório.</span>
                 <div class="input-group">
                     <input type="text" id="email" name="email" placeholder="nome.sobrenome" aria-describedby="instrucao-email erro-email" autocomplete="off" required spellcheck="false">
                     <span class="input-suffix" aria-hidden="true">@undf.edu.br</span>
@@ -45,14 +45,14 @@
 
             <div class="form-group">
                 <label for="telefone">Telefone (com DDD)</label>
-                <span id="instrucao-telefone" class="sr-only">Insira o DDD e o número do seu telefone. Digite os 11 números, a formatação é automática. Campo obrigatório.</span>
+                <span id="instrucao-telefone" class="sr-only">Digite os 11 números, a formatação é automática. Campo obrigatório.</span>
                 <input type="tel" id="telefone" name="telefone" placeholder="(61) 99999-9999" aria-describedby="instrucao-telefone erro-telefone" autocomplete="tel" required>
                 <span id="erro-telefone" class="msg-feedback"></span>
             </div>
 
             <div class="form-group dropdown-container">
                 <label for="curso">Selecione o curso</label>
-                <span id="instrucao-curso" class="sr-only">Campo de busca de curso. Comece a digitar o nome do seu curso para filtrar as opções, ou pressione Alt e Seta para Baixo para abrir a lista completa. Use as setas do teclado para navegar e Enter para confirmar. Campo obrigatório.</span>
+                <span id="instrucao-curso" class="sr-only">Comece a digitar para filtrar as opções, ou pressione Alt e Seta para Baixo para abrir a lista completa. Use as setas do teclado para navegar e Enter para confirmar. Campo obrigatório.</span>
                 <input type="text" id="curso" name="curso" placeholder="Ex: Ciência da Computação" aria-describedby="instrucao-curso erro-curso" autocomplete="off" required role="combobox" aria-expanded="false" aria-controls="lista-cursos" aria-autocomplete="list" aria-haspopup="listbox">
                 <ul id="lista-cursos" class="dropdown-list hidden" role="listbox" aria-label="Resultados da busca de cursos"></ul>
                 <span id="erro-curso" class="msg-feedback"></span>
@@ -60,7 +60,7 @@
 
             <fieldset id="fieldset-turno" class="form-group group-radios" aria-describedby="instrucao-turno erro-turno">
                 <legend>Turno do Curso</legend>
-                <span id="instrucao-turno" class="sr-only">Navegue com as setas do teclado para escolher o turno matutino, vespertino ou noturno. Campo obrigatório.</span>
+                <span id="instrucao-turno" class="sr-only">Navegue com as setas do teclado para escolher a opção desejada. Campo obrigatório.</span>
                 <div class="radio-options">
                     <div class="radio-item">
                         <input type="radio" id="turno-matutino" name="turno" value="matutino" required>
@@ -84,14 +84,14 @@
 
     </main>
 
-    <div id="tela-loading" class="overlay hidden">
+    <div id="tela-loading" class="overlay hidden" role="status" aria-live="assertive">
         <div class="modal-content loading-box" tabindex="-1">
             <div class="spinner"></div>
             <p>Processando seus dados...</p>
         </div>
     </div>
 
-    <div id="modal-feedback" class="modal-overlay hidden" aria-modal="true" role="dialog">
+    <div id="modal-feedback" class="modal-overlay hidden" aria-modal="true" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-desc">
         <div id="modal-box" class="modal-content">
             <div id="modal-icon" class="modal-icon"></div>
             <h2 id="modal-title"></h2>
