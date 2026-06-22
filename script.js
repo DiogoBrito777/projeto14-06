@@ -559,17 +559,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('btn-sucesso-ok').addEventListener('click', () => {
-        esconderModal();
-        inputs.nome.focus(); 
-    });
-
-    document.getElementById('btn-erro-tentar').addEventListener('click', () => {
-        btnEnviar.focus(); 
-        esconderModal();
-        form.requestSubmit(btnEnviar); 
-    });
-
     const resetarFormulario = () => {
         esconderModal();
         form.reset();
@@ -600,9 +589,20 @@ document.addEventListener('DOMContentLoaded', () => {
             feedbackBotao.innerHTML = '';
         }
 
-        inputs.nome.focus();
+        inputs.nome.focus(); // Devolve o foco de forma limpa para o leitor de tela iniciar novamente
         checarBotaoGeral();
     };
+
+    // CORREÇÃO AQUI: O botão OK chama a limpeza completa e devolve o foco limpo
+    document.getElementById('btn-sucesso-ok').addEventListener('click', () => {
+        resetarFormulario(); 
+    });
+
+    document.getElementById('btn-erro-tentar').addEventListener('click', () => {
+        btnEnviar.focus(); 
+        esconderModal();
+        form.requestSubmit(btnEnviar); 
+    });
 
     document.getElementById('btn-erro-cancelar').addEventListener('click', () => {
         resetarFormulario();
@@ -659,9 +659,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.removeEventListener('keydown', blockTabHandler);
             telaLoading.classList.add('hidden');
+            
+            // CORREÇÃO AQUI: Apenas mostra o modal. A limpeza será feita no click do "OK".
             mostrarModal('sucesso', 'Cadastro concluído!', 'Suas informações foram salvas. Verifique seu e-mail institucional em breve.');
             
-            resetarFormulario(); 
             isSubmitting = false; 
 
         } catch (erro) {
